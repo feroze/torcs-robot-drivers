@@ -102,9 +102,23 @@ drive(int index, tCarElt* car, tSituation *s)
 
     // set up the values to return
     car->ctrl.steer = angle / car->_steerLock;
-    car->ctrl.gear = 1; // first gear
-    car->ctrl.accelCmd = 0.3; // 30% accelerator pedal
+    //car->ctrl.gear = 1; // first gear
+    car->ctrl.accelCmd = 1; // 30% accelerator pedal
     car->ctrl.brakeCmd = 0.0; // no brakes
+
+    if (gate > 100) { 
+    // cout << car->_speed_x << endl << car->_steerLock << endl;
+    	cout<< car->_enginerpm<<endl;
+    gate = 0;
+	}
+	else { gate ++;
+
+	}
+    // cout<< gate;
+    if (car->_enginerpm > 550) {
+    	car->ctrl.gear = car->_gear + 1;
+    }
+    else {car->ctrl.gear=1;}
 }
 
 /* End of the current race */
