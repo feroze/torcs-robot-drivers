@@ -131,7 +131,7 @@ drive(int index, tCarElt* car, tSituation *s)
         angle -= SC*car->_trkPos.toMiddle/car->_trkPos.seg->width;
         car->ctrl.steer = angle / car->_steerLock;
         car->ctrl.gear = 1; // first gear
-        car->ctrl.accelCmd = 0.3; // 30% accelerator pedal
+        car->ctrl.accelCmd = 1; // 30% accelerator pedal
         car->ctrl.brakeCmd = 0.0; // no brakes
     }
 }
