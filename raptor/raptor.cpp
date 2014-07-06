@@ -87,38 +87,53 @@ newrace(int index, tCarElt* car, tSituation *s)
 { 
 } 
 
+// counter
+static int stuck = 0;
+
+/* check if the car is stuck */
+bool isStuck(tCarElt* car)
+{
+    float angle = RtTrackSideTgAngleL(&(car->_trkPos)) - car->_yaw;
+    NORM_PI_PI(angle);
+    // angle smaller than 30 degrees?
+    if (fabs(angle) < 30.0/180.0*PI) {
+        stuck = 0;
+        return false;
+    }
+    if (stuck < 100) {
+        stuck++;
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
 /* Drive during race. */
 static void
 drive(int index, tCarElt* car, tSituation *s)
 {
-    memset(&car->ctrl, 0, sizeof(tCarCtrl));
-
     float angle;
     const float SC = 1.0;
 
-    angle = RtTrackSideTgAngleL(&(car->_trkPos)) - car->_yaw;
-    NORM_PI_PI(angle); // put the angle back in the range from -PI to PI
-    angle -= SC*car->_trkPos.toMiddle/car->_trkPos.seg->width;
+    memset(&car->ctrl, 0, sizeof(tCarCtrl));
 
-    // set up the values to return
-    car->ctrl.steer = angle / car->_steerLock;
-    //car->ctrl.gear = 1; // first gear
-    car->ctrl.accelCmd = 1; // 30% accelerator pedal
-    car->ctrl.brakeCmd = 0.0; // no brakes
-
-    if (gate > 100) { 
-    // cout << car->_speed_x << endl << car->_steerLock << endl;
-    	cout<< car->_enginerpm<<endl;
-    gate = 0;
-	}
-	else { gate ++;
-
-	}
-    // cout<< gate;
-    if (car->_enginerpm > 550) {
-    	car->ctrl.gear = car->_gear + 1;
+    if (isStuck(car)) {
+        angle = -RtTrackSideTgAngleL(&(car->_trkPos)) + car->_yaw;
+        NORM_PI_PI(angle); // put the angle back in the range from -PI to PI
+        car->ctrl.steer = angle / car->_steerLock;
+        car->ctrl.gear = -1; // reverse gear
+        car->ctrl.accelCmd = 0.3; // 30% accelerator pedal
+        car->ctrl.brakeCmd = 0.0; // no brakes
+    } else {
+        angle = RtTrackSideTgAngleL(&(car->_trkPos)) - car->_yaw;
+        NORM_PI_PI(angle); // put the angle back in the range from -PI to PI
+        angle -= SC*car->_trkPos.toMiddle/car->_trkPos.seg->width;
+        car->ctrl.steer = angle / car->_steerLock;
+        car->ctrl.gear = 1; // first gear
+        car->ctrl.accelCmd = 0.3; // 30% accelerator pedal
+        car->ctrl.brakeCmd = 0.0; // no brakes
     }
-    else {car->ctrl.gear=1;}
 }
 
 /* End of the current race */
