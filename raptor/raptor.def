@@ -1,0 +1,13 @@
+;
+;   file                 : raptor.def
+;   created              : Sun Jul 6 12:03:06 IST 2014
+;   copyright            : (C) 2002 Feroze Naina
+;
+
+LIBRARY	raptor
+
+SECTIONS .data READ WRITE
+
+EXPORTS
+	raptor
+
