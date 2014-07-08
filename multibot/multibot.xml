@@ -21,7 +21,7 @@
 	<attstr name="desc" val=""></attstr>
 	<attstr name="team" val=""></attstr>
 	<attstr name="author" val="Feroze Naina"></attstr>
-	<attstr name="car name" val="buggy"></attstr>
+	<attstr name="car name" val="car5-trb1"></attstr>
 	<attnum name="race number" val="0"></attnum>
 	<attnum name="red" val="1.0"></attnum>
 	<attnum name="green" val="1.0"></attnum>
