@@ -127,5 +127,7 @@ endrace(int index, tCarElt *car, tSituation *s)
 static void
 shutdown(int index)
 {
+    //free(botname[index]);
+    delete driver[index];
 }
 
