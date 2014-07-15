@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    file                 : trafficbot.xml
+    created              : Tue Jul 8 10:29:21 IST 2014
+    copyright            : (C) 2002 Feroze Naina
+-->
+
+<!--    This program is free software; you can redistribute it and/or modify  -->
+<!--    it under the terms of the GNU General Public License as published by  -->
+<!--    the Free Software Foundation; either version 2 of the License, or     -->
+<!--    (at your option) any later version.                                   -->
+
+<!DOCTYPE params SYSTEM "../../libs/tgf/params.dtd">
+<params name="trafficbot" type="robotdef">
+  <section name="Robots">
+    <section name="index">
+
+
+      <section name="0">
+	<attstr name="name" val="trafficbot 1"></attstr>
+	<attstr name="desc" val=""></attstr>
+	<attstr name="team" val=""></attstr>
+	<attstr name="author" val="Feroze Naina"></attstr>
+	<attstr name="car name" val="buggy"></attstr>
+	<attnum name="race number" val="0"></attnum>
+	<attnum name="red" val="1.0"></attnum>
+	<attnum name="green" val="1.0"></attnum>
+	<attnum name="blue" val="1.0"></attnum>
+      </section>
+
+
+ 			<section name="1">
+				<attstr name="name" val="trafficbot 2"></attstr>
+				<attstr name="desc" val=""></attstr>
+				<attstr name="team" val=""></attstr>
+				<attstr name="author" val="Feroze Naina"></attstr>
+				<attstr name="car name" val="car6-trb1"></attstr>
+				<attnum name="race number" val="72"></attnum>
+				<attnum name="red" val="1.0"></attnum>
+				<attnum name="green" val="0.0"></attnum>
+				<attnum name="blue" val="1.0"></attnum>
+			</section>
+
+
+    </section>
+  </section>
+</params>
