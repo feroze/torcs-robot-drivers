@@ -9,7 +9,7 @@
 ROBOT       = squaredriver
 MODULE      = ${ROBOT}.so
 MODULEDIR   = drivers/${ROBOT}
-SOURCES     = ${ROBOT}.cpp driver.cpp
+SOURCES     = ${ROBOT}.cpp driver.cpp opponent.cpp
 
 SHIPDIR     = drivers/${ROBOT}
 SHIP        = ${ROBOT}.xml acura-nsx-sz.rgb logo.rgb

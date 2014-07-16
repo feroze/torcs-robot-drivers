@@ -67,7 +67,8 @@ squaredriver.o: squaredriver.cpp /usr/include/stdio.h \
  /usr/src/torcs/torcs-1.3.6/export/include/graphic.h \
  /usr/src/torcs/torcs-1.3.6/export/include/simu.h \
  /usr/src/torcs/torcs-1.3.6/export/include/robottools.h \
- /usr/src/torcs/torcs-1.3.6/export/include/robot.h driver.h linalg.h
+ /usr/src/torcs/torcs-1.3.6/export/include/robot.h driver.h linalg.h \
+ opponent.h
 driver.o: driver.cpp driver.h /usr/include/stdio.h \
  /usr/include/features.h /usr/include/i386-linux-gnu/bits/predefs.h \
  /usr/include/i386-linux-gnu/sys/cdefs.h \
@@ -137,4 +138,74 @@ driver.o: driver.cpp driver.h /usr/include/stdio.h \
  /usr/src/torcs/torcs-1.3.6/export/include/graphic.h \
  /usr/src/torcs/torcs-1.3.6/export/include/simu.h \
  /usr/src/torcs/torcs-1.3.6/export/include/robottools.h \
- /usr/src/torcs/torcs-1.3.6/export/include/robot.h linalg.h
+ /usr/src/torcs/torcs-1.3.6/export/include/robot.h linalg.h opponent.h
+opponent.o: opponent.cpp opponent.h /usr/include/stdio.h \
+ /usr/include/features.h /usr/include/i386-linux-gnu/bits/predefs.h \
+ /usr/include/i386-linux-gnu/sys/cdefs.h \
+ /usr/include/i386-linux-gnu/bits/wordsize.h \
+ /usr/include/i386-linux-gnu/gnu/stubs.h \
+ /usr/include/i386-linux-gnu/gnu/stubs-32.h \
+ /usr/lib/gcc/i686-linux-gnu/4.6/include/stddef.h \
+ /usr/include/i386-linux-gnu/bits/types.h \
+ /usr/include/i386-linux-gnu/bits/typesizes.h /usr/include/libio.h \
+ /usr/include/_G_config.h /usr/include/wchar.h \
+ /usr/lib/gcc/i686-linux-gnu/4.6/include/stdarg.h \
+ /usr/include/i386-linux-gnu/bits/stdio_lim.h \
+ /usr/include/i386-linux-gnu/bits/sys_errlist.h /usr/include/stdlib.h \
+ /usr/include/i386-linux-gnu/bits/waitflags.h \
+ /usr/include/i386-linux-gnu/bits/waitstatus.h /usr/include/endian.h \
+ /usr/include/i386-linux-gnu/bits/endian.h \
+ /usr/include/i386-linux-gnu/bits/byteswap.h /usr/include/xlocale.h \
+ /usr/include/i386-linux-gnu/sys/types.h /usr/include/time.h \
+ /usr/include/i386-linux-gnu/sys/select.h \
+ /usr/include/i386-linux-gnu/bits/select.h \
+ /usr/include/i386-linux-gnu/bits/sigset.h \
+ /usr/include/i386-linux-gnu/bits/time.h \
+ /usr/include/i386-linux-gnu/sys/sysmacros.h \
+ /usr/include/i386-linux-gnu/bits/pthreadtypes.h /usr/include/alloca.h \
+ /usr/include/string.h /usr/include/math.h \
+ /usr/include/i386-linux-gnu/bits/huge_val.h \
+ /usr/include/i386-linux-gnu/bits/huge_valf.h \
+ /usr/include/i386-linux-gnu/bits/huge_vall.h \
+ /usr/include/i386-linux-gnu/bits/inf.h \
+ /usr/include/i386-linux-gnu/bits/nan.h \
+ /usr/include/i386-linux-gnu/bits/mathdef.h \
+ /usr/include/i386-linux-gnu/bits/mathcalls.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/tgf.h \
+ /usr/include/i386-linux-gnu/sys/param.h \
+ /usr/lib/gcc/i686-linux-gnu/4.6/include-fixed/limits.h \
+ /usr/lib/gcc/i686-linux-gnu/4.6/include-fixed/syslimits.h \
+ /usr/include/limits.h /usr/include/i386-linux-gnu/bits/posix1_lim.h \
+ /usr/include/i386-linux-gnu/bits/local_lim.h /usr/include/linux/limits.h \
+ /usr/include/i386-linux-gnu/bits/posix2_lim.h \
+ /usr/include/i386-linux-gnu/bits/xopen_lim.h /usr/include/linux/param.h \
+ /usr/include/i386-linux-gnu/asm/param.h /usr/include/asm-generic/param.h \
+ /usr/include/assert.h /usr/include/c++/4.6/cstring \
+ /usr/include/c++/4.6/i686-linux-gnu/./bits/c++config.h \
+ /usr/include/c++/4.6/i686-linux-gnu/./bits/os_defines.h \
+ /usr/include/c++/4.6/i686-linux-gnu/./bits/cpu_defines.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/osspec.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/track.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/tmath/linalg_t.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/tmath/v2_t.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/tmath/v3_t.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/tmath/v4_t.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/tmath/straight2_t.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/car.h /usr/include/plib/sg.h \
+ /usr/include/plib/ul.h /usr/include/ctype.h /usr/include/unistd.h \
+ /usr/include/i386-linux-gnu/bits/posix_opt.h \
+ /usr/include/i386-linux-gnu/bits/environments.h \
+ /usr/include/i386-linux-gnu/bits/confname.h /usr/include/getopt.h \
+ /usr/include/dlfcn.h /usr/include/i386-linux-gnu/bits/dlfcn.h \
+ /usr/include/fcntl.h /usr/include/i386-linux-gnu/bits/fcntl.h \
+ /usr/include/i386-linux-gnu/bits/uio.h \
+ /usr/include/i386-linux-gnu/bits/stat.h \
+ /usr/lib/gcc/i686-linux-gnu/4.6/include/float.h /usr/include/errno.h \
+ /usr/include/i386-linux-gnu/bits/errno.h /usr/include/linux/errno.h \
+ /usr/include/i386-linux-gnu/asm/errno.h /usr/include/asm-generic/errno.h \
+ /usr/include/asm-generic/errno-base.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/raceman.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/graphic.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/simu.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/robottools.h \
+ /usr/src/torcs/torcs-1.3.6/export/include/robot.h linalg.h driver.h

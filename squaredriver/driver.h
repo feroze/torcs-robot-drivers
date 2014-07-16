@@ -14,6 +14,10 @@
 #include <robot.h>
 
 #include "linalg.h"
+#include "opponent.h"
+
+class Opponents;
+class Opponent;
 
 class Driver {
     public:
@@ -26,6 +30,9 @@ class Driver {
         void drive(tSituation *s);
         int pitCommand(tSituation *s);
         void endRace(tSituation *s);
+        tCarElt *getCarPtr() { return car; }
+        tTrack *getTrackPtr() { return track; }
+        float getSpeed() { return speed; }
 
     private:
 
@@ -38,6 +45,7 @@ class Driver {
         int getGear();
         float getSteer();
         v2d getTargetPoint();
+        float getOvertakeOffset();
 
         float filterABS(float brake);
         float filterTCL(float accel);
@@ -46,6 +54,8 @@ class Driver {
         float filterTCL_4WD();
         void initTCLfilter();
         float filterTrk(float accel);
+        float filterBColl(float brake);
+        float filterSColl(float steer);
 
         void initCa();
         void initCw();
@@ -55,8 +65,11 @@ class Driver {
         float trackangle;
         float angle;
         float mass;         /* mass of car + fuel */
+        float speed;        /* speed in track direction */
         tCarElt *car;       /* pointer to tCarElt struct */
-
+        float myoffset;     /* overtake offset sideways */
+        Opponents *opponents;
+        Opponent *opponent;
 
         /* data that should stay constant after first initialization */
         int MAX_UNSTUCK_COUNT;
@@ -83,6 +96,9 @@ class Driver {
         static const float LOOKAHEAD_CONST;
         static const float LOOKAHEAD_FACTOR;
         static const float WIDTHDIV;
+        static const float SIDECOLL_MARGIN;
+        static const float BORDER_OVERTAKE_MARGIN;
+        static const float OVERTAKE_OFFSET_INC;
 
         /* class variables */
         tTrack* track;

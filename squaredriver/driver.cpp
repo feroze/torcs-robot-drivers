@@ -1,5 +1,9 @@
 #include "driver.h"
 
+#define BT_SECT_PRIV "bt private"
+#define BT_ATT_FUELPERLAP "fuelperlap"
+
+
 const float Driver::MAX_UNSTUCK_ANGLE = 15.0/180.0*PI;      /* [radians] */
 const float Driver::UNSTUCK_TIME_LIMIT = 2.0;               /* [s] */
 const float Driver::MAX_UNSTUCK_SPEED = 5.0;                /* [m/s] */
@@ -15,17 +19,49 @@ const float Driver::TCL_MINSPEED = 3.0;                     /* [m/s] */
 const float Driver::LOOKAHEAD_CONST = 17.0;                 /* [m] */
 const float Driver::LOOKAHEAD_FACTOR = 0.33;                /* [-] */
 const float Driver::WIDTHDIV = 4.0; 
+const float Driver::SIDECOLL_MARGIN = 2.0;                  /* [m] */
+const float Driver::BORDER_OVERTAKE_MARGIN = 0.5;           /* [m] */
+const float Driver::OVERTAKE_OFFSET_INC = 0.1;  
 
 Driver::Driver(int index)
 {
     INDEX = index;
 }
 
+
 /* Called for every track change or new race. */
 void Driver::initTrack(tTrack* t, void *carHandle, void **carParmHandle, tSituation *s)
 {
     track = t;
-    *carParmHandle = NULL;
+
+    char buffer[256];
+    /* get a pointer to the first char of the track filename */
+    char* trackname = strrchr(track->filename, '/') + 1;
+
+    switch (s->_raceType) {
+        case RM_TYPE_PRACTICE:
+            sprintf(buffer, "drivers/bt/%d/practice/%s", INDEX, trackname);
+            break;
+        case RM_TYPE_QUALIF:
+            sprintf(buffer, "drivers/bt/%d/qualifying/%s", INDEX, trackname);
+            break;
+        case RM_TYPE_RACE:
+            sprintf(buffer, "drivers/bt/%d/race/%s", INDEX, trackname);
+            break;
+        default:
+            break;
+    }
+
+    *carParmHandle = GfParmReadFile(buffer, GFPARM_RMODE_STD);
+    if (*carParmHandle == NULL) {
+        sprintf(buffer, "drivers/bt/%d/default.xml", INDEX);
+        *carParmHandle = GfParmReadFile(buffer, GFPARM_RMODE_STD);
+    }
+
+    float fuel = GfParmGetNum(*carParmHandle, BT_SECT_PRIV, BT_ATT_FUELPERLAP, (char*)NULL, 5.0);
+    fuel *= (s->_totLaps + 1.0);
+    GfParmSetNum(*carParmHandle, SECT_CAR, PRM_FUEL, (char*)NULL, MIN(fuel, 100.0));
+
 }
 
 /* Start a new race. */
@@ -38,6 +74,10 @@ void Driver::newRace(tCarElt* car, tSituation *s)
     initCa();
     initCw();
     initTCLfilter();
+
+    /* initialize the list of opponents */
+    opponents = new Opponents(s, this);
+    opponent = opponents->getOpponentPtr();
 }
 
 /* Drive during race. */
@@ -130,12 +170,6 @@ float Driver::getAccel()
     }
 }
 
-/***************************************************************************
- *
- * utility functions
- *
-***************************************************************************/
-
 
 float Driver::getBrake()
 {
@@ -199,38 +233,75 @@ float Driver::getSteer()
 
 
 /* compute target point for steering */
+/* compute target point for steering */
 v2d Driver::getTargetPoint()
 {
     tTrackSeg *seg = car->_trkPos.seg;
     float lookahead = LOOKAHEAD_CONST + car->_speed_x*LOOKAHEAD_FACTOR;
     float length = getDistToSegEnd();
+    float offset = getOvertakeOffset();
 
     while (length < lookahead) {
         seg = seg->next;
-        length += seg->length;  
+        length += seg->length;
     }
-    
+
     length = lookahead - length + seg->length;
     v2d s;
     s.x = (seg->vertex[TR_SL].x + seg->vertex[TR_SR].x)/2.0;
     s.y = (seg->vertex[TR_SL].y + seg->vertex[TR_SR].y)/2.0;
-    
+
     if ( seg->type == TR_STR) {
-        v2d d;
+        v2d d, n;
+        n.x = (seg->vertex[TR_EL].x - seg->vertex[TR_ER].x)/seg->length;
+        n.y = (seg->vertex[TR_EL].y - seg->vertex[TR_ER].y)/seg->length;
+        n.normalize();
         d.x = (seg->vertex[TR_EL].x - seg->vertex[TR_SL].x)/seg->length;
         d.y = (seg->vertex[TR_EL].y - seg->vertex[TR_SL].y)/seg->length;
-        return s + d*length;
+        return s + d*length + offset*n;
     } else {
-        v2d c;
+        v2d c, n;
         c.x = seg->center.x;
         c.y = seg->center.y;
         float arc = length/seg->radius;
-        float arcsign = (seg->type == TR_RGT) ? -1 : 1;
+        float arcsign = (seg->type == TR_RGT) ? -1.0 : 1.0;
         arc = arc*arcsign;
-        return s.rotate(c, arc);
+        s = s.rotate(c, arc);
+        n = c - s;
+        n.normalize();
+        return s + arcsign*offset*n;
     }
 }
 
+/* Compute an offset to the target point */
+float Driver::getOvertakeOffset()
+{
+    int i;
+    float catchdist, mincatchdist = FLT_MAX;
+    Opponent *o = NULL;
+
+    for (i = 0; i < opponents->getNOpponents(); i++) {
+        if (opponent[i].getState() & OPP_FRONT) {
+            catchdist = opponent[i].getCatchDist();
+            if (catchdist < mincatchdist) {
+                mincatchdist = catchdist;
+                o = &opponent[i];
+            }
+        }
+    }
+
+    if (o != NULL) {
+        float w = o->getCarPtr()->_trkPos.seg->width/WIDTHDIV-BORDER_OVERTAKE_MARGIN;
+        float otm = o->getCarPtr()->_trkPos.toMiddle;
+        if (otm > 0.0 && myoffset > -w) myoffset -= OVERTAKE_OFFSET_INC;
+        else if (otm < 0.0 && myoffset < w) myoffset += OVERTAKE_OFFSET_INC;
+    } else {
+        if (myoffset > OVERTAKE_OFFSET_INC) myoffset -= OVERTAKE_OFFSET_INC;
+        else if (myoffset < -OVERTAKE_OFFSET_INC) myoffset += OVERTAKE_OFFSET_INC;
+        else myoffset = 0.0;
+    }
+    return myoffset;
+}
 
 
 /* Update my private data every timestep */
@@ -240,6 +311,8 @@ void Driver::update(tSituation *s)
     angle = trackangle - car->_yaw;
     NORM_PI_PI(angle);
     mass = CARMASS + car->_fuel;
+    speed = Opponent::getSpeed(car);
+    opponents->update(s, this);
 }
 
 
@@ -289,6 +362,65 @@ void Driver::initCw()
     CW = 0.645*cx*frontarea;
 }
 
+/* Brake filter for collision avoidance */
+float Driver::filterBColl(float brake)
+{
+    float currentspeedsqr = car->_speed_x*car->_speed_x;
+    float mu = car->_trkPos.seg->surface->kFriction;
+    float cm = mu*G*mass;
+    float ca = CA*mu + CW;
+    int i;
+
+    for (i = 0; i < opponents->getNOpponents(); i++) {
+        if (opponent[i].getState() & OPP_COLL) {
+            float allowedspeedsqr = opponent[i].getSpeed();
+            allowedspeedsqr *= allowedspeedsqr;
+            float brakedist = mass*(currentspeedsqr - allowedspeedsqr) / (2.0*(cm + allowedspeedsqr*ca));
+            if (brakedist > opponent[i].getDistance()) {
+                return 1.0;
+            }
+        }
+    }
+    return brake;
+}
+
+/* Steer filter for collision avoidance */
+float Driver::filterSColl(float steer)
+{
+    int i;
+    float sidedist = 0.0, fsidedist = 0.0, minsidedist = FLT_MAX;
+    Opponent *o = NULL;
+
+    /* get the index of the nearest car (o) */
+    for (i = 0; i < opponents->getNOpponents(); i++) {
+        if (opponent[i].getState() & OPP_SIDE) {
+            sidedist = opponent[i].getSideDist();
+            fsidedist = fabs(sidedist);
+            if (fsidedist < minsidedist) {
+                minsidedist = fsidedist;
+                o = &opponent[i];
+            }
+        }
+    }
+
+    /* if there is another car handle the situation */
+    if (o != NULL) {
+        float d = fsidedist - o->getWidth();
+        /* near enough */
+        if (d < SIDECOLL_MARGIN) {
+            /* compute angle between cars */
+            tCarElt *ocar = o->getCarPtr();
+            float diffangle = ocar->_yaw - car->_yaw;
+            NORM_PI_PI(diffangle);
+            const float c = SIDECOLL_MARGIN/2.0;
+            d = d - c;
+            if (d < 0.0) d = 0.0;
+            float psteer = diffangle/car->_steerLock;
+            return steer*(d/c) + 2.0*psteer*(1.0-d/c);
+        }
+    }
+    return steer;
+}
 
 /* Antilocking filter for brakes */
 float Driver::filterABS(float brake)
