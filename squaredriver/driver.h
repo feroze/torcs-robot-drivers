@@ -45,6 +45,7 @@ class Driver {
         float filterTCL_FWD();
         float filterTCL_4WD();
         void initTCLfilter();
+        float filterTrk(float accel);
 
         void initCa();
         void initCw();
@@ -81,6 +82,7 @@ class Driver {
         static const float TCL_MINSPEED;
         static const float LOOKAHEAD_CONST;
         static const float LOOKAHEAD_FACTOR;
+        static const float WIDTHDIV;
 
         /* class variables */
         tTrack* track;

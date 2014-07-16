@@ -14,6 +14,7 @@ const float Driver::TCL_SLIP = 0.9;                         /* [-] range [0.95..
 const float Driver::TCL_MINSPEED = 3.0;                     /* [m/s] */
 const float Driver::LOOKAHEAD_CONST = 17.0;                 /* [m] */
 const float Driver::LOOKAHEAD_FACTOR = 0.33;                /* [-] */
+const float Driver::WIDTHDIV = 4.0; 
 
 Driver::Driver(int index)
 {
@@ -89,8 +90,18 @@ float Driver::getAllowedSpeed(tTrackSeg *segment)
     if (segment->type == TR_STR) {
         return FLT_MAX;
     } else {
+        float arc = 0.0;
+        tTrackSeg *s = segment;
+        
+        while (s->type == segment->type && arc < PI/2.0) {
+            arc += s->arc;
+            s = s->next;
+        }
+
+        arc /= PI/2.0;
         float mu = segment->surface->kFriction;
-        return sqrt((mu*G*segment->radius)/(1.0 - MIN(1.0, segment->radius*CA*mu/mass)));
+        float r = (segment->radius + segment->width/2.0)/sqrt(arc);
+        return sqrt((mu*G*r)/(1.0 - MIN(1.0, r*CA*mu/mass)));
     }
 }
 
@@ -344,3 +355,27 @@ float Driver::filterTCL_4WD()
            (car->_wheelSpinVel(REAR_RGT) + car->_wheelSpinVel(REAR_LFT)) *
             car->_wheelRadius(REAR_LFT) / 4.0;
 }
+
+/* Hold car on the track */
+float Driver::filterTrk(float accel)
+{
+    tTrackSeg* seg = car->_trkPos.seg;
+
+    if (car->_speed_x < MAX_UNSTUCK_SPEED) return accel;
+    
+    if (seg->type == TR_STR) {
+        float tm = fabs(car->_trkPos.toMiddle);
+        float w = seg->width/WIDTHDIV;
+        if (tm > w) return 0.0; else return accel;
+    } else {
+        float sign = (seg->type == TR_RGT) ? -1 : 1;
+        if (car->_trkPos.toMiddle*sign > 0.0) {
+            return accel;
+        } else {
+            float tm = fabs(car->_trkPos.toMiddle);
+            float w = seg->width/WIDTHDIV;
+            if (tm > w) return 0.0; else return accel;
+        }
+    }
+}
+
