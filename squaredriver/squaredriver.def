@@ -1,0 +1,13 @@
+;
+;   file                 : squaredriver.def
+;   created              : Tue Jul 15 19:49:24 IST 2014
+;   copyright            : (C) 2002 Feroze Naina
+;
+
+LIBRARY	squaredriver
+
+SECTIONS .data READ WRITE
+
+EXPORTS
+	squaredriver
+

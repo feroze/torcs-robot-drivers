@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    file                 : squaredriver.xml
+    created              : Tue Jul 15 19:49:24 IST 2014
+    copyright            : (C) 2002 Feroze Naina
+-->
+
+<!DOCTYPE params SYSTEM "../../libs/tgf/params.dtd">
+<params name="squaredriver" type="robotdef">
+  <section name="Robots">
+    <section name="index">
+      <section name="0">
+	<attstr name="name" val="squaredriver"></attstr>
+	<attstr name="desc" val=""></attstr>
+	<attstr name="team" val=""></attstr>
+	<attstr name="author" val="Feroze Naina"></attstr>
+	<attstr name="car name" val="acura-nsx-sz"></attstr>
+	<attstr name="category" val="Track-RWD-GrB"></attstr>
+	<attnum name="race number" val="0"></attnum>
+	<attnum name="red" val="1.0"></attnum>
+	<attnum name="green" val="1.0"></attnum>
+	<attnum name="blue" val="1.0"></attnum>
+      </section>
+
+
+
+
+    </section>
+  </section>
+</params>
