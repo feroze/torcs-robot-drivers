@@ -13,6 +13,8 @@
 #include <robottools.h>
 #include <robot.h>
 
+#include "linalg.h"
+
 class Driver {
     public:
         Driver(int index);
@@ -34,6 +36,15 @@ class Driver {
         float getDistToSegEnd();
         float getBrake();
         int getGear();
+        float getSteer();
+        v2d getTargetPoint();
+
+        float filterABS(float brake);
+        float filterTCL(float accel);
+        float filterTCL_RWD();
+        float filterTCL_FWD();
+        float filterTCL_4WD();
+        void initTCLfilter();
 
         void initCa();
         void initCw();
@@ -52,6 +63,7 @@ class Driver {
         float CARMASS;      /* mass of the car only */
         float CA;           /* aerodynamic downforce coefficient */
         float CW;           /* aerodynamic drag coefficient */
+        float (Driver::*GET_DRIVEN_WHEEL_SPEED)();
 
 
         /* class constants */
@@ -63,7 +75,12 @@ class Driver {
         static const float FULL_ACCEL_MARGIN;
         static const float SHIFT;
         static const float SHIFT_MARGIN;
-
+        static const float ABS_SLIP;
+        static const float ABS_MINSPEED;
+        static const float TCL_SLIP;
+        static const float TCL_MINSPEED;
+        static const float LOOKAHEAD_CONST;
+        static const float LOOKAHEAD_FACTOR;
 
         /* class variables */
         tTrack* track;

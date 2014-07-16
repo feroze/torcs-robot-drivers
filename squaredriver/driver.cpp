@@ -8,6 +8,12 @@ const float Driver::G = 9.81;                               /* [m/(s*s)] */
 const float Driver::FULL_ACCEL_MARGIN = 1.0;
 const float Driver::SHIFT = 0.9;                            /* [-] (% of rpmredline) */
 const float Driver::SHIFT_MARGIN = 4.0;     
+const float Driver::ABS_SLIP = 0.9;                         /* [-] range [0.95..0.3] */
+const float Driver::ABS_MINSPEED = 3.0;                     /* [m/s] */
+const float Driver::TCL_SLIP = 0.9;                         /* [-] range [0.95..0.3] */
+const float Driver::TCL_MINSPEED = 3.0;                     /* [m/s] */
+const float Driver::LOOKAHEAD_CONST = 17.0;                 /* [m] */
+const float Driver::LOOKAHEAD_FACTOR = 0.33;                /* [-] */
 
 Driver::Driver(int index)
 {
@@ -30,6 +36,7 @@ void Driver::newRace(tCarElt* car, tSituation *s)
     CARMASS = GfParmGetNum(car->_carHandle, SECT_CAR, PRM_MASS, NULL, 1000.0);
     initCa();
     initCw();
+    initTCLfilter();
 }
 
 /* Drive during race. */
@@ -45,12 +52,11 @@ void Driver::drive(tSituation *s)
         car->ctrl.accelCmd = 0.5; // 30% accelerator pedal
         car->ctrl.brakeCmd = 0.0; // no brakes
     } else {
-        float steerangle = angle - car->_trkPos.toMiddle/car->_trkPos.seg->width;
-        car->ctrl.steer = steerangle / car->_steerLock;
-        car->ctrl.gear = 1; // first gear
-        car->ctrl.accelCmd = 0.3; // 30% accelerator pedal
+        car->ctrl.steer = getSteer();
+        car->ctrl.gear = getGear();
+        car->ctrl.brakeCmd = filterABS(getBrake());
         if (car->ctrl.brakeCmd == 0.0) {
-            car->ctrl.accelCmd = getAccel();
+            car->ctrl.accelCmd = filterTCL(getAccel());
         } else {
             car->ctrl.accelCmd = 0.0;
         }
@@ -70,6 +76,13 @@ void Driver::endRace(tSituation *s)
 }
 
 
+/***************************************************************************
+ *
+ * utility functions
+ *
+***************************************************************************/
+
+
 /* Compute the allowed speed on a segment */
 float Driver::getAllowedSpeed(tTrackSeg *segment)
 {
@@ -77,7 +90,7 @@ float Driver::getAllowedSpeed(tTrackSeg *segment)
         return FLT_MAX;
     } else {
         float mu = segment->surface->kFriction;
-        return sqrt(mu*G*segment->radius);
+        return sqrt((mu*G*segment->radius)/(1.0 - MIN(1.0, segment->radius*CA*mu/mass)));
     }
 }
 
@@ -160,6 +173,55 @@ int Driver::getGear()
     return car->_gear;
 }
 
+
+/* compute steer value */
+float Driver::getSteer()
+{
+    float targetAngle;
+    v2d target = getTargetPoint();
+
+    targetAngle = atan2(target.y - car->_pos_Y, target.x - car->_pos_X);
+    targetAngle -= car->_yaw;
+    NORM_PI_PI(targetAngle);
+    return targetAngle / car->_steerLock;
+}
+
+
+/* compute target point for steering */
+v2d Driver::getTargetPoint()
+{
+    tTrackSeg *seg = car->_trkPos.seg;
+    float lookahead = LOOKAHEAD_CONST + car->_speed_x*LOOKAHEAD_FACTOR;
+    float length = getDistToSegEnd();
+
+    while (length < lookahead) {
+        seg = seg->next;
+        length += seg->length;  
+    }
+    
+    length = lookahead - length + seg->length;
+    v2d s;
+    s.x = (seg->vertex[TR_SL].x + seg->vertex[TR_SR].x)/2.0;
+    s.y = (seg->vertex[TR_SL].y + seg->vertex[TR_SR].y)/2.0;
+    
+    if ( seg->type == TR_STR) {
+        v2d d;
+        d.x = (seg->vertex[TR_EL].x - seg->vertex[TR_SL].x)/seg->length;
+        d.y = (seg->vertex[TR_EL].y - seg->vertex[TR_SL].y)/seg->length;
+        return s + d*length;
+    } else {
+        v2d c;
+        c.x = seg->center.x;
+        c.y = seg->center.y;
+        float arc = length/seg->radius;
+        float arcsign = (seg->type == TR_RGT) ? -1 : 1;
+        arc = arc*arcsign;
+        return s.rotate(c, arc);
+    }
+}
+
+
+
 /* Update my private data every timestep */
 void Driver::update(tSituation *s)
 {
@@ -214,4 +276,71 @@ void Driver::initCw()
     float cx = GfParmGetNum(car->_carHandle, SECT_AERODYNAMICS, PRM_CX, (char*) NULL, 0.0);
     float frontarea = GfParmGetNum(car->_carHandle, SECT_AERODYNAMICS, PRM_FRNTAREA, (char*) NULL, 0.0);
     CW = 0.645*cx*frontarea;
+}
+
+
+/* Antilocking filter for brakes */
+float Driver::filterABS(float brake)
+{
+    if (car->_speed_x < ABS_MINSPEED) return brake;
+    int i;
+    float slip = 0.0;
+    for (i = 0; i < 4; i++) {
+        slip += car->_wheelSpinVel(i) * car->_wheelRadius(i) / car->_speed_x;
+    }
+    slip = slip/4.0;
+    if (slip < ABS_SLIP) brake = brake*slip;
+    return brake;
+}
+
+
+/* TCL filter for accelerator pedal */
+float Driver::filterTCL(float accel)
+{
+    if (car->_speed_x < TCL_MINSPEED) return accel;
+    float slip = car->_speed_x/(this->*GET_DRIVEN_WHEEL_SPEED)();
+    if (slip < TCL_SLIP) {
+        accel = 0.0;
+    }
+    return accel;
+}
+
+
+/* Traction Control (TCL) setup */
+void Driver::initTCLfilter()
+{
+    const char *traintype = GfParmGetStr(car->_carHandle, SECT_DRIVETRAIN, PRM_TYPE, VAL_TRANS_RWD);
+    if (strcmp(traintype, VAL_TRANS_RWD) == 0) {
+        GET_DRIVEN_WHEEL_SPEED = &Driver::filterTCL_RWD;
+    } else if (strcmp(traintype, VAL_TRANS_FWD) == 0) {
+        GET_DRIVEN_WHEEL_SPEED = &Driver::filterTCL_FWD;
+    } else if (strcmp(traintype, VAL_TRANS_4WD) == 0) {
+        GET_DRIVEN_WHEEL_SPEED = &Driver::filterTCL_4WD;
+    }
+}
+
+
+/* TCL filter plugin for rear wheel driven cars */
+float Driver::filterTCL_RWD()
+{
+    return (car->_wheelSpinVel(REAR_RGT) + car->_wheelSpinVel(REAR_LFT)) *
+            car->_wheelRadius(REAR_LFT) / 2.0;
+}
+
+
+/* TCL filter plugin for front wheel driven cars */
+float Driver::filterTCL_FWD()
+{
+    return (car->_wheelSpinVel(FRNT_RGT) + car->_wheelSpinVel(FRNT_LFT)) *
+            car->_wheelRadius(FRNT_LFT) / 2.0;
+}
+
+
+/* TCL filter plugin for all wheel driven cars */
+float Driver::filterTCL_4WD()
+{
+    return (car->_wheelSpinVel(FRNT_RGT) + car->_wheelSpinVel(FRNT_LFT)) *
+            car->_wheelRadius(FRNT_LFT) / 4.0 +
+           (car->_wheelSpinVel(REAR_RGT) + car->_wheelSpinVel(REAR_LFT)) *
+            car->_wheelRadius(REAR_LFT) / 4.0;
 }

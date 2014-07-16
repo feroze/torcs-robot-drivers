@@ -67,7 +67,7 @@ squaredriver.o: squaredriver.cpp /usr/include/stdio.h \
  /usr/src/torcs/torcs-1.3.6/export/include/graphic.h \
  /usr/src/torcs/torcs-1.3.6/export/include/simu.h \
  /usr/src/torcs/torcs-1.3.6/export/include/robottools.h \
- /usr/src/torcs/torcs-1.3.6/export/include/robot.h driver.h
+ /usr/src/torcs/torcs-1.3.6/export/include/robot.h driver.h linalg.h
 driver.o: driver.cpp driver.h /usr/include/stdio.h \
  /usr/include/features.h /usr/include/i386-linux-gnu/bits/predefs.h \
  /usr/include/i386-linux-gnu/sys/cdefs.h \
@@ -137,4 +137,4 @@ driver.o: driver.cpp driver.h /usr/include/stdio.h \
  /usr/src/torcs/torcs-1.3.6/export/include/graphic.h \
  /usr/src/torcs/torcs-1.3.6/export/include/simu.h \
  /usr/src/torcs/torcs-1.3.6/export/include/robottools.h \
- /usr/src/torcs/torcs-1.3.6/export/include/robot.h
+ /usr/src/torcs/torcs-1.3.6/export/include/robot.h linalg.h
